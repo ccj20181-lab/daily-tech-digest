@@ -1,4 +1,4 @@
-name: 每日科技简报生成器
+name: 每日财经简报生成器
 
 on:
   # 定时任务：每天北京时间 06:30 运行（UTC 前一天 22:30）
@@ -7,10 +7,6 @@ on:
 
   # 支持手动触发
   workflow_dispatch:
-
-  # 可选：推送时也可以触发（用于测试）
-  # push:
-  #   branches: [ main ]
 
 permissions:
   contents: write
@@ -36,12 +32,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: 运行科技简报生成脚本
+    - name: 运行财经简报生成脚本
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         ANTHROPIC_BASE_URL: https://open.bigmodel.cn/api/anthropic
       run: |
-        python scripts/tech_digest.py
+        python scripts/finance_digest.py
 
     - name: 生成 HTML 索引
       run: |
@@ -53,14 +49,14 @@ jobs:
         git config --local user.name "github-actions[bot]"
         git add digests/
         git add index.html
-        git diff --staged --quiet || git commit -m "🤖 自动生成每日科技简报 $(date +'%Y-%m-%d')"
+        git diff --staged --quiet || git commit -m "🤖 自动生成每日财经简报 $(date +'%Y-%m-%d')"
 
     - name: 推送到远程仓库
       run: |
         git push
 
     - name: 发送微信通知（PushPlus）
-      if: success()
+      if: success() && secrets.PUSHPLUS_TOKEN != ''
       env:
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}

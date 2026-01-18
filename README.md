@@ -1,16 +1,17 @@
-# 每日科技简报生成系统 - GitHub Actions 定时任务配置指南
+# 每日财经简报生成系统 - GitHub Actions 定时任务配置指南
 
 ## 📖 项目简介
 
-这是一个基于 Claude Agent Skills 和 GitHub Actions 的自动化科技简报生成系统。它会每天定时抓取技术社区和科技媒体的热点内容，通过 AI 分析整理成结构化简报，并自动发布到 GitHub Pages。
+这是一个基于 Claude Agent Skills 和 GitHub Actions 的自动化财经简报生成系统。它会每天定时抓取全球顶级财经媒体的热点内容，通过 AI 分析整理成结构化简报，并自动发布到 GitHub Pages 和微信推送。
 
 ### ✨ 核心特性
 
 - ⏰ **全自动定时任务** - 每天自动运行，无需人工干预
-- 🌐 **多源数据抓取** - V2EX、Hacker News、36氪、少数派、虎嗅、InfoQ 等
-- 🤖 **AI 智能分析** - 使用智谱 GLM-4.7 模型自动筛选热点、提炼趋势
+- 🌐 **多源数据抓取** - 华尔街见闻、财新网、FT中文网、Bloomberg、路透社、CNBC 等
+- 🤖 **AI 智能分析** - 使用智谱 GLM-4-Plus 模型自动筛选热点、提炼趋势
 - 💰 **零成本运行** - GitHub Actions 个人使用完全免费
 - 📱 **自动发布** - 生成 Markdown 和 HTML，支持 GitHub Pages 托管
+- 💬 **微信推送** - 集成 PushPlus 自动推送到微信
 
 ---
 
@@ -21,29 +22,31 @@
 1. **创建或使用现有仓库**
    ```bash
    # 在你的 GitHub 账号下创建一个新仓库
-   # 例如: daily-tech-digest
+   # 例如: daily-finance-digest
    ```
 
 2. **将 skill 文件复制到仓库**
    ```bash
-   # 假设你的仓库在本地的路径是 ~/Projects/daily-tech-digest
-   cp -r ~/.claude/skills/daily-tech-digest/* ~/Projects/daily-tech-digest/
-   cd ~/Projects/daily-tech-digest
+   cp -r ~/.claude/skills/daily-tech-digest/* ~/Projects/daily-finance-digest/
+   cd ~/Projects/daily-finance-digest
    ```
 
 ### 步骤 2: 配置 GitHub Secrets
 
-在 GitHub 仓库中配置智谱 AI API Key：
+在 GitHub 仓库中配置以下 Secrets：
 
 1. **打开仓库设置**
    - 进入你的 GitHub 仓库
    - 点击 `Settings` > `Secrets and variables` > `Actions`
    - 点击 `New repository secret`
 
-2. **添加以下 Secret**:
+2. **添加以下 Secrets**:
    ```
    Name: ANTHROPIC_API_KEY
-   Value: 你的智谱AI API Key (例如: 1969492e83ed4a519f86f577a2bdf4c9.r1QC0aAPcviNOY1T)
+   Value: 你的智谱AI API Key
+
+   Name: PUSHPLUS_TOKEN (可选)
+   Value: 你的 PushPlus Token
    ```
 
 ### 步骤 3: 验证 GitHub Actions 配置
@@ -56,99 +59,57 @@ GitHub Actions 配置文件位于：
 配置说明：
 
 ```yaml
-# 定时任务：每天北京时间 6:00 运行（UTC 22:00）
+# 定时任务：每天北京时间 06:30 运行（UTC 前一天 22:30）
 schedule:
-  - cron: '0 22 * * *'
+  - cron: '30 22 * * *'
 
 # 支持手动触发（用于测试）
 workflow_dispatch: true
 ```
 
-**修改定时时间（可选）**：
-```yaml
-# 北京时间 8:00 (UTC 0:00)
-schedule:
-  - cron: '0 0 * * *'
-
-# 北京时间 12:00 (UTC 4:00)
-schedule:
-  - cron: '0 4 * * *'
-
-# 北京时间 20:00 (UTC 12:00)
-schedule:
-  - cron: '0 12 * * *'
-```
-
-### 步骤 4: 启用 GitHub Actions
-
-1. **推送代码到 GitHub**
-   ```bash
-   git init
-   git add .
-   git commit -m "初始化每日科技简报系统"
-   git branch -M main
-   git remote add origin https://github.com/你的用户名/daily-tech-digest.git
-   git push -u origin main
-   ```
-
-2. **确认 Actions 已启用**
-   - 进入仓库的 `Actions` 标签页
-   - 如果提示启用，点击 `I understand my workflows, go ahead and enable them`
-
-### 步骤 5: 测试运行
+### 步骤 4: 测试运行
 
 **方式1: 手动触发（推荐）**
 1. 进入 `Actions` 标签页
-2. 选择 `每日科技简报生成器` 工作流
+2. 选择 `每日财经简报生成器` 工作流
 3. 点击 `Run workflow` > `Run workflow`
 
 **方式2: 等待定时触发**
-- 系统会在每天北京时间 6:00 自动运行
+- 系统会在每天北京时间 06:30 自动运行
 
 ---
 
-## 📊 监控运行状态
+## 📊 数据源配置
 
-### 查看运行日志
+当前配置的财经媒体 RSS 源：
 
-1. **进入 Actions 页面**
-   - 仓库主页 > `Actions` 标签
+| 媒体 | 分类 | 覆盖内容 |
+|------|------|----------|
+| 华尔街见闻 | 市场动态 | A股、港股、美股实时资讯 |
+| 财新网 | 深度分析 | 财经深度调查和评论 |
+| 第一财经 | 综合财经 | 宏观、产业、公司新闻 |
+| FT中文网 | 市场分析 | 国际市场、中国经济 |
+| 央行政策 | 政策公告 | 货币政策、监管动态 |
+| Bloomberg | 国际财经 | 全球市场、经济数据 |
+| 路透社 | 国际新闻 | 突发财经新闻 |
+| CNBC | 美股聚焦 | 美股市场、科技股 |
 
-2. **查看工作流运行记录**
-   - 绿色 ✅ = 运行成功
-   - 红色 ❌ = 运行失败
-   - 黄色 🟡 = 运行中
+---
 
-3. **查看详细日志**
-   - 点击具体的运行记录
-   - 展开各个步骤查看输出
-   - 失败时会显示错误信息
+## 📱 微信推送配置（可选）
 
-### 常见问题排查
+### 获取 PushPlus Token
 
-**问题1: API Key 错误**
-```
-Error: 请设置 ANTHROPIC_API_KEY 环境变量
-```
-解决：检查 GitHub Secrets 中是否正确配置了 `ANTHROPIC_API_KEY`
-
-**问题2: 依赖安装失败**
-```
-Error: No module named 'anthropic'
-```
-解决：检查 `requirements.txt` 文件是否存在且内容正确
-
-**问题3: 抓取失败**
-```
-[警告] V2EX 抓取失败: ...
-```
-解决：网络问题，通常会自动恢复，可以重新运行工作流
+1. 访问 [PushPlus官网](https://www.pushplus.plus/)
+2. 微信扫码登录
+3. 复制你的 Token
+4. 添加到 GitHub Secrets: `PUSHPLUS_TOKEN`
 
 ---
 
 ## 🌐 配置 GitHub Pages（可选）
 
-如果你想在线查看生成的简报：
+如果想在线查看生成的简报：
 
 ### 步骤 1: 启用 GitHub Pages
 
@@ -161,88 +122,7 @@ Error: No module named 'anthropic'
 ### 步骤 2: 访问在线页面
 
 ```
-https://你的用户名.github.io/daily-tech-digest/digests/
-```
-
-或查看最新简报：
-```
-https://你的用户名.github.io/daily-tech-digest/digests/latest.md
-```
-
----
-
-## ⚙️ 自定义配置
-
-### 修改数据源
-
-编辑 `scripts/config.json`：
-
-```json
-{
-  "rss_feeds": {
-    "添加新源": {
-      "url": "https://example.com/feed",
-      "name": "来源名称",
-      "category": "分类"
-    }
-  },
-  "v2ex": {
-    "max_topics": 20  // 修改抓取数量
-  }
-}
-```
-
-### 修改 AI 模型
-
-在 `scripts/config.json` 中：
-
-```json
-{
-  "claude": {
-    "model": "glm-4-plus",  // 或其他智谱模型
-    "max_tokens": 8192      // 生成内容长度
-  }
-}
-```
-
-### 修改输出格式
-
-在 `scripts/config.json` 中：
-
-```json
-{
-  "output": {
-    "digests_dir": "digests",
-    "date_format": "%Y-%m-%d"
-  }
-}
-```
-
----
-
-## 🔧 高级功能
-
-### 增强版简报（含趋势分析）
-
-运行增强版脚本，生成更深入的分析：
-
-```yaml
-# 在 GitHub Actions 中修改运行脚本
-- name: 运行增强版科技简报
-  run: |
-    python scripts/advanced_digest.py
-```
-
-### 添加通知功能
-
-可以扩展 GitHub Actions，添加 Telegram/邮件通知：
-
-```yaml
-- name: 发送 Telegram 通知
-  run: |
-    curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-      -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-      -d "text=科技简报已生成✅"
+https://你的用户名.github.io/仓库名/digests/
 ```
 
 ---
@@ -252,57 +132,28 @@ https://你的用户名.github.io/daily-tech-digest/digests/latest.md
 ### GitHub Actions
 - ✅ **个人账户**：每月 2000 分钟免费
 - ✅ **公共仓库**：完全免费
-- 本次任务每次运行约 2-3 分钟，远超免费额度
+- 本次任务每次运行约 2-3 分钟
 
 ### 智谱 AI API
-- GLM-4.7 模型非常经济
-- 每次生成简报约消耗 2000-3000 tokens
+- GLM-4-Plus 模型经济实惠
+- 每次生成简报约消耗 3000-5000 tokens
 - 智谱新用户通常有免费额度
-- 即使付费，成本也极低（¥0.01/次以内）
+- 即使付费，成本极低（¥0.05/次以内）
 
 ---
 
-## 📈 数据统计
+## 📈 输出文件
 
-基于典型运行的统计：
+- `digests/YYYY-MM-DD.md` - 按日期归档的简报
+- `digests/latest.md` - 最新简报
+- `digests/index.html` - HTML 索引页面
 
-- **数据抓取**: 90 条/天 (V2EX 10 + HN 20 + RSS 60)
-- **AI 处理**: 筛选至 15-20 条高质量内容
-- **生成时间**: 1-2 分钟
-- **输出文件**:
-  - 日期简报: `digests/2026-01-18.md`
-  - 最新简报: `digests/latest.md`
-  - HTML 索引: `digests/index.html`
-
----
-
-## 🎯 总结
-
-### 优势对比
-
-| 特性 | 传统方式 | Claude Skills + GitHub Actions |
-|------|---------|------------------------------|
-| 成本 | VPS 服务器费用 | 完全免费 |
-| 维护 | 需自己监控 | GitHub 自动管理 |
-| 扩展性 | 受限于服务器 | 无限制 |
-| 稳定性 | 依赖服务器 | GitHub 99.9% SLA |
-| 技能要求 | 运维知识 | 仅需 Git 基础 |
-
-### 下一步
-
-1. ✅ 配置 GitHub Secrets
-2. ✅ 推送代码到 GitHub
-3. ✅ 手动触发测试
-4. ✅ 等待定时任务运行
-5. ✅ 查看生成的简报
-
----
-
-## 📚 相关资源
-
-- [GitHub Actions 官方文档](https://docs.github.com/en/actions)
-- [智谱 AI 开放平台](https://open.bigmodel.cn/)
-- [Claude Code Skills 文档](https://github.com/anthropics/claude-code)
+简报内容结构：
+- 🔥 今日热点
+- 📈 市场动态
+- 💰 宏观与政策
+- 🏢 产业要闻
+- 📊 数据日历
 
 ---
 
