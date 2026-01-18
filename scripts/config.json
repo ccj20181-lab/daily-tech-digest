@@ -1,52 +1,55 @@
 {
   "rss_feeds": {
-    "36kr": {
-      "url": "https://36kr.com/feed",
-      "name": "36氪",
-      "category": "科技媒体"
+    "wallstreetcn": {
+      "url": "https://wallstreetcn.com/rss/news.xml",
+      "name": "华尔街见闻",
+      "category": "市场动态"
     },
-    "sspai": {
-      "url": "https://sspai.com/feed",
-      "name": "少数派",
-      "category": "效率工具"
+    "caixin": {
+      "url": "https://www.caixin.com/rss/rss_finance.xml",
+      "name": "财新网",
+      "category": "深度分析"
     },
-    "huxiu": {
-      "url": "https://www.huxiu.com/rss/0.xml",
-      "name": "虎嗅",
-      "category": "商业科技"
+    "yicai": {
+      "url": "https://www.yicai.com/rss/yicai.xml",
+      "name": "第一财经",
+      "category": "综合财经"
     },
-    "infoq_cn": {
-      "url": "https://www.infoq.cn/feed",
-      "name": "InfoQ中国",
-      "category": "技术深度"
+    "ftchinese": {
+      "url": "https://www.ftchinese.com/rss/feed",
+      "name": "FT中文网",
+      "category": "市场分析"
     },
-    "oschina": {
-      "url": "https://www.oschina.net/news/rss",
-      "name": "开源中国",
-      "category": "开源动态"
+    "pbc": {
+      "url": "http://www.pbc.gov.cn/rss/rss_gdxw.xml",
+      "name": "央行政策",
+      "category": "政策公告"
     },
-    "solidot": {
-      "url": "https://www.solidot.org/index.rss",
-      "name": "Solidot",
-      "category": "科技新闻"
+    "bloomberg": {
+      "url": "https://www.bloomberg.com/feed/economy.rss",
+      "name": "Bloomberg",
+      "category": "国际财经"
+    },
+    "reuters": {
+      "url": "https://www.reuters.com/finance/breakingnews",
+      "name": "路透社",
+      "category": "国际新闻"
+    },
+    "cnbc": {
+      "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+      "name": "CNBC",
+      "category": "美股聚焦"
     }
   },
-  "v2ex": {
-    "hot_url": "https://www.v2ex.com/api/topics/hot.json",
-    "max_topics": 20
-  },
-  "hackernews": {
-    "top_url": "https://hacker-news.firebaseio.com/v0/topstories.json",
-    "item_url": "https://hacker-news.firebaseio.com/v0/item/{}.json",
-    "max_items": 20
-  },
   "claude": {
-    "model": "glm-4.7",
-    "max_tokens": 4096,
+    "model": "glm-4-plus",
+    "max_tokens": 8192,
+    "temperature": 0.3,
     "base_url": "https://open.bigmodel.cn/api/anthropic"
   },
   "output": {
     "digests_dir": "digests",
-    "date_format": "%Y-%m-%d"
+    "date_format": "%Y-%m-%d",
+    "enable_risk_warning": true
   }
 }

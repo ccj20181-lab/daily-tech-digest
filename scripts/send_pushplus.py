@@ -156,7 +156,7 @@ def main():
         # 构建标题
         tz = pytz.timezone("Asia/Shanghai")
         today = datetime.now(tz).strftime("%Y-%m-%d")
-        title = f"📊 每日科技简报 {today}"
+        title = f"💰 每日财经简报 {today}"
 
         # 发送完整简报通知
         success = send_pushplus_notification(

@@ -1,0 +1,65 @@
+name: 每日财经简报生成器
+
+on:
+  # 定时任务：每天北京时间 06:30 运行（UTC 前一天 22:30）
+  schedule:
+    - cron: '30 22 * * *'
+
+  # 支持手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 设置 Python 环境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 运行财经简报生成脚本
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANTHROPIC_BASE_URL: https://open.bigmodel.cn/api/anthropic
+      run: |
+        python scripts/finance_digest.py
+
+    - name: 生成 HTML 索引
+      run: |
+        python scripts/generate_html.py
+
+    - name: 提交变更
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add digests/
+        git add index.html
+        git diff --staged --quiet || git commit -m "💰 自动生成每日财经简报 $(date +'%Y-%m-%d')"
+
+    - name: 推送到远程仓库
+      run: |
+        git push
+
+    - name: 发送微信通知（PushPlus）
+      if: success()
+      env:
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+      run: |
+        python scripts/send_pushplus.py
