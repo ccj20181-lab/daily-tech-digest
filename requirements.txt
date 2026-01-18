@@ -6,3 +6,4 @@ pytz>=2024.1
 markdown>=3.8
 akshare>=1.13.0
 
+pandas

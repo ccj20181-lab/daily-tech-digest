@@ -1,276 +1,310 @@
 #!/usr/bin/env python3
 """
 Financial Calendar Reminder
-Fetches economic events for today and tomorrow, and sends a notification via PushPlus.
+Fetches economic events and earnings reports for today and tomorrow.
+Also scans the next 7 days for "Super Events" (High impact).
+Sends notification via PushPlus.
 """
 
-import os
 import sys
-import datetime
-import pytz
+import os
+import time
 import akshare as ak
 import pandas as pd
+from datetime import datetime, timedelta
+import pytz
 import traceback
 
-# Add current directory to sys.path to import send_pushplus
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
+# Ensure we can import from the same directory
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from send_pushplus import send_pushplus_notification
 except ImportError:
-    # Fallback if running from root directory
+    # Fallback if running from root
     sys.path.append(os.path.join(os.getcwd(), 'scripts'))
     from send_pushplus import send_pushplus_notification
 
+# Configuration
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # seconds
+TZ = pytz.timezone('Asia/Shanghai')
+
+# Super Event Keywords (High Impact)
+SUPER_EVENT_KEYWORDS = [
+    "利率决议", "央行", "非农", "GDP", "CPI", "PPI", "失业率",
+    "会议纪要", "美联储", "欧洲央行", "财政预算"
+]
+
 def get_current_time():
-    """Get current time in Shanghai timezone"""
-    tz = pytz.timezone('Asia/Shanghai')
-    return datetime.datetime.now(tz)
+    return datetime.now(TZ)
 
-def fetch_economic_calendar(date_obj):
-    """
-    Fetch economic calendar for a specific date using akshare.
-    Returns a DataFrame or None if failed/empty.
-    """
-    date_str = date_obj.strftime("%Y%m%d")
-    print(f"Fetching economic calendar for {date_str}...")
+def fetch_data_with_retry(func, *args, **kwargs):
+    """Run an akshare function with retry logic."""
+    for attempt in range(MAX_RETRIES):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            print(f"[Warning] Attempt {attempt + 1}/{MAX_RETRIES} failed for {func.__name__}: {e}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY)
+            else:
+                print(f"[Error] All retries failed for {func.__name__}")
+                return None
 
+# -----------------------------------------------------------------------------
+# Economic Calendar (Jin10 / Baidu)
+# -----------------------------------------------------------------------------
+
+def fetch_economic_events(date_str):
+    """
+    Fetch economic events for a specific date.
+    date_str: 'YYYYmmdd'
+    """
+    print(f"Fetching economic events for {date_str}...")
+
+    # Try Jin10 first (richer data)
     try:
-        # Use Baidu interface as it is stable and verified
-        df = ak.news_economic_baidu(date=date_str)
-        return df
+        df = fetch_data_with_retry(ak.calendar_economic_jin10, date=date_str)
+        if df is not None and not df.empty:
+            return df
     except Exception as e:
-        print(f"Error fetching Baidu calendar: {e}")
-        return None
+        print(f"Jin10 fetch failed: {e}")
 
-def format_event_row(row):
-    """Format a single event row from the dataframe"""
-    # Columns: '日期', '时间', '地区', '事件', '公布', '预期', '前值', '重要性'
-    time = row.get('时间', 'N/A')
-    country = row.get('地区', 'N/A')
-    event = row.get('事件', 'N/A')
-    importance = row.get('重要性', '')
-    actual = row.get('公布', '')
-    forecast = row.get('预期', '')
-    previous = row.get('前值', '')
+    # Fallback to Baidu? Baidu structure is different.
+    # For now, let's rely on Jin10 or return empty if failed.
+    return pd.DataFrame()
 
-    # Map importance (Baidu usually uses 1, 2, 3 stars)
-    try:
-        imp_val = int(importance)
-    except:
-        imp_val = 1
+def format_daily_events(df, date_label):
+    """Format the main list of events for the daily reminder."""
+    if df.empty:
+        return "暂无高重要性数据/事件。"
 
-    if imp_val >= 3:
-        icon = "🔴" # High
-    elif imp_val == 2:
-        icon = "🟡" # Medium
-    else:
-        icon = "⚪" # Low
-
-    # Format string
-    # - 09:30 🔴 **中国**: CPI年率 (前: 0.7%, 预: 0.8%)
-    details = []
-    if previous and str(previous).strip() != 'nan':
-        details.append(f"前:{previous}")
-    if forecast and str(forecast).strip() != 'nan':
-        details.append(f"预:{forecast}")
-
-    detail_str = f" ({', '.join(details)})" if details else ""
-
-    return f"- {time} {icon} **{country}**: {event}{detail_str}"
-
-def process_calendar_data(df):
-    """
-    Process and filter calendar data.
-    Returns a list of formatted strings for important events.
-    """
-    if df is None or df.empty:
-        return []
-
-    formatted_events = []
+    lines = []
+    # Jin10 Columns: "时间", "地区", "指标", "重要性", "前值", "预测值", "公布值", "事件"
 
     for _, row in df.iterrows():
-        try:
-            importance = int(row.get('重要性', 0))
-        except:
-            importance = 0
+        importance = str(row.get('重要性', ''))
+        # Only show High importance
+        if '高' in importance or 'High' in importance or '3' in str(importance):
+            time_str = row.get('时间', '')
+            region = row.get('地区', '')
+            indicator = row.get('指标', '')
+            event = row.get('事件', '')
 
-        # Filter for Medium (2) and High (3) importance
-        if importance >= 2:
-            formatted_events.append(format_event_row(row))
+            content = indicator if indicator else event
+            if event and indicator and event != indicator:
+                content = f"{indicator} ({event})"
 
-    return formatted_events
+            prediction = row.get('预测值', '')
+            previous = row.get('前值', '')
 
-def get_current_report_period(date_obj):
-    """
-    Determine which report period is active.
-    A-share Disclosure Season:
-    - Annual Report (previous year): Jan 1 - Apr 30
-    - Q1 Report: Apr 1 - Apr 30
-    - Semi-Annual: Jul 1 - Aug 30
-    - Q3 Report: Oct 1 - Oct 31
-    """
-    month = date_obj.month
+            line = f"- **{time_str}** {region} {content}"
+            extra = []
+            if prediction: extra.append(f"预:{prediction}")
+            if previous: extra.append(f"前:{previous}")
+
+            if extra:
+                line += f" ({', '.join(extra)})"
+
+            lines.append(line)
+
+    if not lines:
+        return "暂无高重要性数据/事件。"
+
+    return "\n".join(lines)
+
+def filter_super_events(df, date_display):
+    """Filter events that match super keywords for the weekly scan."""
+    if df.empty:
+        return []
+
+    super_events = []
+    for _, row in df.iterrows():
+        content = str(row.get('事件', '')) + " " + str(row.get('指标', ''))
+        importance = str(row.get('重要性', ''))
+
+        # Check keywords
+        matched = False
+        for kw in SUPER_EVENT_KEYWORDS:
+            if kw in content:
+                matched = True
+                break
+
+        # Must be High importance OR contain critical keyword
+        is_high = '高' in importance or 'High' in importance
+
+        if matched and is_high:
+            time_str = row.get('时间', '')
+            region = row.get('地区', '')
+            event_str = f"**{date_display} {time_str}** {region} {content.strip()}"
+            super_events.append(event_str)
+
+    return super_events
+
+def scan_next_week():
+    """Scan the next 7 days for super events."""
+    today = get_current_time().date()
+    # Start looking from Day+2 (since Tomorrow is already covered in detail)
+    # Actually, user wants "Future" lookahead.
+    # If we run on Day 0 evening (for Day 1), Day 1 is "Tomorrow".
+    # So "Future" usually means Day 2 to Day 7.
+
+    start_date = today + timedelta(days=2)
+    end_date = today + timedelta(days=7)
+
+    all_super_events = []
+
+    current = start_date
+    while current <= end_date:
+        date_str = current.strftime("%Y%m%d")
+        display_date = current.strftime("%m-%d %a") # e.g., 01-18 Sat
+
+        df = fetch_economic_events(date_str)
+        events = filter_super_events(df, display_date)
+        all_super_events.extend(events)
+
+        current += timedelta(days=1)
+        time.sleep(1) # Rate limit politeness
+
+    return all_super_events
+
+# -----------------------------------------------------------------------------
+# Earnings Calendar (A-Share)
+# -----------------------------------------------------------------------------
+
+def get_report_period(date_obj):
     year = date_obj.year
+    month = date_obj.month
+    if 1 <= month <= 4: return f"{year - 1}年报"
+    if 4 < month <= 8: return f"{year}中报"
+    if 8 < month <= 10: return f"{year}三季报"
+    return f"{year}年报" # Default fallback
 
-    if 1 <= month <= 4:
-        return f"{year - 1}年报"
-    elif 7 <= month <= 8:
-        return f"{year}中报" # Semi-annual
-    elif month == 10:
-        return f"{year}三季报"
-    else:
-        # Outside standard mandatory disclosure windows, checking for annual report of previous year is safest bet or return None
-        if month > 4 and month < 7:
-             return f"{year}一季报" # Just in case
-        return f"{year-1}年报"
+def fetch_earnings_events(date_obj):
+    """Fetch earnings disclosure for a specific date."""
+    date_str = date_obj.strftime("%Y-%m-%d")
+    print(f"Fetching earnings for {date_str}...")
 
-def fetch_earnings_calendar(date_obj):
-    """
-    Fetch earnings calendar (disclosure schedule) for a specific date.
-    Returns DataFrame or None.
-    """
     try:
-        period = get_current_report_period(date_obj)
-        print(f"Fetching earnings calendar for {period}...")
-
-        # This function returns the whole schedule for the period.
-        # We need to cache it or filter it.
-        # Since we are running this daily, fetching the whole list (thousands of rows) might be heavy
-        # but akshare usually handles it.
-        df = ak.stock_report_disclosure(market="沪深京", period=period)
+        period = get_report_period(date_obj)
+        # Fetch period data (cached if possible, but here we just fetch)
+        # Note: This might be heavy if called multiple times.
+        # Ideally we fetch once per period, but script runs once daily.
+        df = fetch_data_with_retry(ak.stock_report_disclosure, market="沪深京", period=period)
 
         if df is None or df.empty:
-            return None
+            return []
 
-        # Filter for the specific date
-        # Columns usually: '股票代码', '股票简称', '首次预约', '初次变更', '二次变更', '三次变更', '实际披露'
-        # We check '首次预约' (First Reservation) matching our date string YYYY-MM-DD
-        date_str = date_obj.strftime("%Y-%m-%d")
+        # Filter for date
+        # Check columns. Usually '首次预约'
+        if '首次预约' not in df.columns:
+            return []
 
-        # Ensure column is string or datetime
-        # Simple string matching
+        # Filter
+        target = df[df['首次预约'].astype(str) == date_str]
 
-        # We need to handle potential multiple reservation columns, but '首次预约' is the main one for reminders.
-        # If '实际披露' exists and matches, it's confirmed. But for reminders, we use reservation.
+        events = []
+        count = 0
+        for _, row in target.iterrows():
+            if count >= 10: # Limit to 10
+                events.append(f"- ... (共 {len(target)} 家)")
+                break
+            name = row.get('股票简称', '')
+            code = row.get('股票代码', '')
+            events.append(f"- 📊 **{name}** ({code})")
+            count += 1
 
-        target_df = df[df['首次预约'].astype(str) == date_str].copy()
-
-        return target_df
+        return events
 
     except Exception as e:
-        print(f"Error fetching earnings calendar: {e}")
-        return None
-
-def format_earnings_row(row):
-    """Format a single earnings row"""
-    code = row.get('股票代码', '')
-    name = row.get('股票简称', '')
-    return f"- 📊 **{name}** ({code})"
-
-def process_earnings_data(df):
-    """
-    Process earnings data.
-    Returns list of formatted strings.
-    """
-    if df is None or df.empty:
+        print(f"Earnings fetch failed: {e}")
         return []
 
-    events = []
-    # Limit to top 15 to avoid spamming if many companies report on the same day
-    count = 0
-    max_count = 15
-
-    for _, row in df.iterrows():
-        if count >= max_count:
-            events.append(f"- ... (共 {len(df)} 家)")
-            break
-        events.append(format_earnings_row(row))
-        count += 1
-
-    return events
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
 
 def main():
-    # 1. Setup
     token = os.environ.get("PUSHPLUS_TOKEN")
     if not token:
         print("[Error] PUSHPLUS_TOKEN not found")
         sys.exit(1)
 
     now = get_current_time()
-    today = now.date()
-    tomorrow = today + datetime.timedelta(days=1)
+    today_date = now.date()
+    tomorrow_date = today_date + timedelta(days=1)
 
-    print(f"Running Financial Calendar for {today}")
+    today_str = today_date.strftime("%Y%m%d")
+    tomorrow_str = tomorrow_date.strftime("%Y%m%d")
 
-    # 2. Fetch Data
-    print("Fetching Economic Data...")
-    today_eco_df = fetch_economic_calendar(today)
-    tomorrow_eco_df = fetch_economic_calendar(tomorrow)
+    print(f"--- Starting Financial Calendar Check for {today_date} ---")
 
-    today_eco_events = process_calendar_data(today_eco_df)
-    tomorrow_eco_events = process_calendar_data(tomorrow_eco_df)
+    # 1. Fetch Today & Tomorrow Economic Events
+    print("\n[1/4] Fetching Economic Data...")
+    df_today = fetch_economic_events(today_str)
+    df_tomorrow = fetch_economic_events(tomorrow_str)
 
-    print("Fetching Earnings Data...")
-    today_earnings_df = fetch_earnings_calendar(today)
-    tomorrow_earnings_df = fetch_earnings_calendar(tomorrow)
+    txt_today_eco = format_daily_events(df_today, "Today")
+    txt_tomorrow_eco = format_daily_events(df_tomorrow, "Tomorrow")
 
-    today_earnings_events = process_earnings_data(today_earnings_df)
-    tomorrow_earnings_events = process_earnings_data(tomorrow_earnings_df)
+    # 2. Fetch Earnings
+    print("\n[2/4] Fetching Earnings Data...")
+    list_today_earnings = fetch_earnings_events(today_date)
+    list_tomorrow_earnings = fetch_earnings_events(tomorrow_date)
 
-    # 3. Build Message
-    message_parts = []
+    # 3. Lookahead Scan
+    print("\n[3/4] Scanning Next Week...")
+    super_events = scan_next_week()
 
-    # Header
-    message_parts.append(f"# 📅 财经日历提醒 ({today})")
-    message_parts.append(f"> 生成时间: {now.strftime('%H:%M')}")
-    message_parts.append("---")
+    # 4. Build Message
+    print("\n[4/4] Building Notification...")
+    lines = []
 
-    # Today's Economic Events
-    message_parts.append("## 🚨 今日重要数据 (Today)")
-    if today_eco_events:
-        message_parts.extend(today_eco_events)
+    # Title
+    lines.append(f"# 📅 财经日历提醒 {tomorrow_date.strftime('%m-%d')}")
+    lines.append(f"> 生成时间: {now.strftime('%H:%M')}")
+    lines.append("---")
+
+    # Part A: Tomorrow (Focus)
+    lines.append(f"## 📌 明日预告 ({tomorrow_date.strftime('%m-%d %a')})")
+    lines.append(txt_tomorrow_eco)
+    if list_tomorrow_earnings:
+        lines.append("\n**财报披露**:")
+        lines.extend(list_tomorrow_earnings)
     else:
-        message_parts.append("今日无重点关注的高重要性数据。")
+        lines.append("\n(无重点财报)")
+    lines.append("")
 
-    # Today's Earnings
-    if today_earnings_events:
-        message_parts.append("")
-        message_parts.append("## 📊 今日财报披露")
-        message_parts.extend(today_earnings_events)
+    # Part B: Today (Review/Urgent)
+    lines.append(f"## 🚨 今日概览 ({today_date.strftime('%m-%d')})")
+    lines.append(txt_today_eco)
+    if list_today_earnings:
+        lines.append("\n**今日财报**:")
+        lines.extend(list_today_earnings)
+    lines.append("")
 
-    message_parts.append("")
-
-    # Tomorrow's Economic Events
-    message_parts.append("## 🔮 明日预告 (Tomorrow)")
-    if tomorrow_eco_events:
-        message_parts.extend(tomorrow_eco_events)
+    # Part C: Future Lookahead
+    lines.append("## 🌟 未来一周重磅前瞻")
+    if super_events:
+        for ev in super_events:
+            lines.append(f"- {ev}")
     else:
-        message_parts.append("明日暂无高重要性数据预告。")
+        lines.append("无重大央行决议或核心数据发布。")
 
-    # Tomorrow's Earnings
-    if tomorrow_earnings_events:
-        message_parts.append("")
-        message_parts.append("## 📝 明日财报预约")
-        message_parts.extend(tomorrow_earnings_events)
+    lines.append("\n---")
+    lines.append("Generated by Financial-Calendar-Bot")
 
-    message_parts.append("")
-    message_parts.append("---")
-    message_parts.append("**注**: 🔴=高重要性 🟡=中重要性")
+    final_content = "\n".join(lines)
 
-    full_content = "\n".join(message_parts)
-    print("Generated Content:")
-    print(full_content)
-
-    # 4. Send Notification
-    title = f"📅 财经日历提醒 {today}"
-    success = send_pushplus_notification(token, title, full_content)
+    # Send
+    title = f"财经日历 {tomorrow_date.strftime('%m-%d')} 前瞻"
+    success = send_pushplus_notification(token, title, final_content)
 
     if success:
-        print("Notification sent successfully.")
+        print("Done.")
     else:
-        print("Failed to send notification.")
+        print("Failed to send.")
         sys.exit(1)
 
 if __name__ == "__main__":
