@@ -56,10 +56,14 @@ jobs:
         git push
 
     - name: 发送微信通知（PushPlus）
-      if: success() && secrets.PUSHPLUS_TOKEN != ''
+      if: success()
       env:
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_RUN_ID: ${{ github.run_id }}
       run: |
-        python scripts/send_pushplus.py
+        if [ -n "$PUSHPLUS_TOKEN" ]; then
+          python scripts/send_pushplus.py
+        else
+          echo "未配置 PUSHPLUS_TOKEN，跳过微信推送"
+        fi
