@@ -1,0 +1,52 @@
+{
+  "rss_feeds": {
+    "36kr": {
+      "url": "https://36kr.com/feed",
+      "name": "36氪",
+      "category": "科技媒体"
+    },
+    "sspai": {
+      "url": "https://sspai.com/feed",
+      "name": "少数派",
+      "category": "效率工具"
+    },
+    "huxiu": {
+      "url": "https://www.huxiu.com/rss/0.xml",
+      "name": "虎嗅",
+      "category": "商业科技"
+    },
+    "infoq_cn": {
+      "url": "https://www.infoq.cn/feed",
+      "name": "InfoQ中国",
+      "category": "技术深度"
+    },
+    "oschina": {
+      "url": "https://www.oschina.net/news/rss",
+      "name": "开源中国",
+      "category": "开源动态"
+    },
+    "solidot": {
+      "url": "https://www.solidot.org/index.rss",
+      "name": "Solidot",
+      "category": "科技新闻"
+    }
+  },
+  "v2ex": {
+    "hot_url": "https://www.v2ex.com/api/topics/hot.json",
+    "max_topics": 20
+  },
+  "hackernews": {
+    "top_url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+    "item_url": "https://hacker-news.firebaseio.com/v0/item/{}.json",
+    "max_items": 20
+  },
+  "claude": {
+    "model": "glm-4.7",
+    "max_tokens": 4096,
+    "base_url": "https://open.bigmodel.cn/api/anthropic"
+  },
+  "output": {
+    "digests_dir": "digests",
+    "date_format": "%Y-%m-%d"
+  }
+}

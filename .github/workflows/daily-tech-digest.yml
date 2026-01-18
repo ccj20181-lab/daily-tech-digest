@@ -1,0 +1,60 @@
+name: 每日科技简报生成器
+
+on:
+  # 定时任务：每天北京时间 6:00 运行（UTC 22:00）
+  schedule:
+    - cron: '0 22 * * *'
+
+  # 支持手动触发
+  workflow_dispatch:
+
+  # 可选：推送时也可以触发（用于测试）
+  # push:
+  #   branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 设置 Python 环境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 运行科技简报生成脚本
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANTHROPIC_BASE_URL: https://open.bigmodel.cn/api/anthropic
+      run: |
+        python scripts/tech_digest.py
+
+    - name: 生成 HTML 索引
+      run: |
+        python scripts/generate_html.py
+
+    - name: 提交变更
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add digests/
+        git add index.html
+        git diff --staged --quiet || git commit -m "🤖 自动生成每日科技简报 $(date +'%Y-%m-%d')"
+
+    - name: 推送到远程仓库
+      run: |
+        git push

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日科技简报 | Daily Tech Digest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+                       box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-tertiary: #18181b;
+            --bg-hover: #1f1f23;
+            --border: #27272a;
+            --border-subtle: #1e1e21;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            --accent: #10b981;
+            --accent-dim: rgba(16, 185, 129, 0.15);
+            --accent-hover: #059669;
+        }
+
+        html {
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        body {
+            min-height: 100vh;
+        }
+
+        ::selection {
+            background: var(--accent-dim);
+            color: var(--text-primary);
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        a:hover {
+            color: var(--accent-hover);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 11, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: #000;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .date-badge {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .github-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            transition: color 0.15s;
+        }
+
+        .github-link:hover {
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        main {
+            padding: 48px 0;
+        }
+
+        /* Digest Item */
+        .digest-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            margin-bottom: 32px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .digest-item:hover {
+            border-color: var(--border);
+        }
+
+        .digest-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .digest-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-dim);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .digest-icon svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent);
+        }
+
+        .digest-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .digest-date {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+        }
+
+        .digest-content {
+            padding: 24px;
+        }
+
+        /* Markdown Content Styles */
+        .digest-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 24px 0 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .digest-content h3::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .digest-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+            color: var(--text-primary);
+        }
+
+        .digest-content p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .digest-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .digest-content em {
+            color: var(--text-tertiary);
+        }
+
+        .digest-content ul {
+            margin-bottom: 20px;
+            padding-left: 24px;
+        }
+
+        .digest-content li {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .digest-content li::marker {
+            color: var(--accent);
+        }
+
+        .digest-content a {
+            color: var(--accent);
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.15s;
+        }
+
+        .digest-content a:hover {
+            border-bottom-color: var(--accent);
+        }
+
+        .digest-content hr {
+            border: none;
+            border-top: 1px solid var(--border-subtle);
+            margin: 32px 0;
+        }
+
+        .digest-content blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 16px;
+            margin: 20px 0;
+            color: var(--text-tertiary);
+        }
+
+        .digest-content code {
+            background: var(--bg-tertiary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+            font-size: 0.9em;
+            color: var(--text-primary);
+        }
+
+        .digest-content pre {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .digest-content pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-secondary);
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-tertiary);
+            font-size: 15px;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 32px 0;
+            margin-top: 48px;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-link {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .footer-link:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header-inner {
+                height: 56px;
+            }
+
+            .logo {
+                font-size: 16px;
+            }
+
+            .logo-icon {
+                width: 32px;
+                height: 32px;
+            }
+
+            .digest-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+
+            .digest-content {
+                padding: 20px 16px;
+            }
+
+            .digest-title {
+                font-size: 16px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .header-right {
+                gap: 8px;
+            }
+
+            .date-badge {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <span>每日科技简报</span>
+                </div>
+                <div class="header-right">
+                    <span class="date-badge">2026年01月17日</span>
+                    <a href="https://github.com/biyan113/cron" class="github-link">
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            
+        <article class="digest-item" data-date="2026-01-17">
+            <div class="digest-header">
+                <div class="digest-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <line x1="10" y1="9" x2="8" y2="9"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="digest-title">科技简报 | 2026-01-17</h2>
+                    <span class="digest-date">2026-01-17</span>
+                </div>
+            </div>
+            <div class="digest-content">
+                <h1 id="2026-01-17">科技简报 | 2026-01-17</h1>
+<p><strong>导语：</strong> AI 开发工具的争议与进化成为今日焦点，Cloudflare 与 ClickHouse 的收购动作揭示了基础设施与可观测性的融合趋势。国内方面，华为重回手机出货量榜首，而围绕 IDE 未来的讨论引发了开发者社区的激烈交锋。</p>
+<hr />
+<h3 id="1">1. 今日热点</h3>
+<p><strong>Cursor “浏览器实验”数据造假风波</strong><br />
+<a href="https://embedding-shapes.github.io/cursor-implied-success-without-evidence/">Cursor's latest “browser experiment” implied success without evidence</a><br />
+备受追捧的 AI 编辑器 Cursor 被指在“浏览器控制”实验中暗示成功却缺乏证据支持。文章质疑其营销展示与实际体验存在差距，引发了关于 AI 工具是否过度宣传的广泛讨论。这提醒我们，在 AI 辅助编程的狂欢中，仍需保持理性验证。</p>
+<p><strong>Cloudflare 收购 Astro，前端生态再洗牌</strong><br />
+<a href="https://astro.build/blog/joining-cloudflare/">Cloudflare acquires Astro</a><br />
+前端框架 Astro 被 Cloudflare 收购。这标志着边缘计算巨头正在进一步整合前端生态，推动 Web 开发向边缘侧迁移。对于开发者而言，Asturo 与 Cloudflare 的深度集成可能意味着更快的部署速度和更优的边缘渲染体验。</p>
+<p><strong>IDE 消亡之年？Steve Yegge 语出惊人</strong><br />
+<a href="https://www.infoq.cn/article/SJNt2c2Sh5AgO4LbiSC8?utm_source=rss&amp;utm_medium=article">IDE消亡之年？Steve Yegge 两句狠话：2026 年还用 IDE 就不行</a><br />
+资深程序员 Steve Yegge 爆论称“2026 年还用 IDE 就不行”，建议每天烧 500–1000 美元的 Token 费用。这一观点在 V2EX 等社区引发热议，折射出传统 IDE 与 AI 辅助环境（如 Cursor/Copilot）之间日益激烈的范式转移。</p>
+<p><strong>Let's Encrypt 支持 6 天证书与 IP 地址证书</strong><br />
+<a href="https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability">6-Day and IP Address Certificates Are Generally Available</a><br />
+Let's Encrypt 正式发布 6 天有效期证书和 IP 地址证书。这一更新极大地提升了自动化证书管理的灵活性，特别是对于那些无域名或需要高频轮换密钥的内部服务而言，是安全运维领域的一大利好。</p>
+<hr />
+<h3 id="2">2. 技术趋势</h3>
+<p><strong>企业级 AI 正在从“单兵”走向“协同”</strong><br />
+从腾讯云发布 AI 原生 Widget 到百度文心内测“多人多 Agent”群聊，再到多智能体任务分配技术的讨论，显示 <strong>AI Agent</strong> 正在从单一工具向系统化、协作化演进。未来的企业应用将更多依赖多个 Agent 互相配合完成任务。</p>
+<p><strong>基础设施厂商“补课”可观测性与数据流</strong><br />
+ClickHouse 收购 Langfuse（LLM 可观测性平台），Cloudflare 收购 Astro（前端框架）。这表明单纯的算力和存储已不够，云厂商正急于通过收购将<strong>应用层的数据流、监控和开发体验</strong>整合进自己的护城河。</p>
+<p><strong>供应链安全与协议弃用</strong><br />
+Google 发布彩虹表以加速淘汰 Net-NTLMv1 协议，同时针对 Pixel 9 的零点击漏洞被曝光。随着攻击手段升级，老旧认证协议的淘汰和移动端底层安全的攻防战将是 2026 年的安全主旋律。</p>
+<hr />
+<h3 id="3">3. 产品观察</h3>
+<p><strong>Apple Pay 中国区十年大更</strong><br />
+<a href="https://sspai.com/post/105462">Apple Pay 公布 2025 年成绩单，迎来入华十周年大更新</a><br />
+作为 Apple Pay 入华十周年的重要节点，虽然具体功能细节尚未完全披露，但结合此前 V2EX 用户关于“购买礼品卡”的反馈，苹果正在试图打通更多本地化支付场景，以提升用户留存。</p>
+<p><strong>Opera One R3：重构 AI 底层</strong><br />
+<a href="https://www.oschina.net/news/397195">Opera One 浏览器发布 R3 更新，重构 AI 底层、优化智能 AI 体验</a><br />
+Opera 并没有随波逐流，而是在其浏览器内核中深度重构了 AI 底层。这预示着浏览器将不再仅仅是内容展示窗口，而是成为本地化 AI 运算的首要入口。</p>
+<p><strong>1Panel v2.0.17：面向多节点的服务器管理</strong><br />
+<a href="https://www.oschina.net/news/397217">1Panel v2.0.17 发布，支持多节点概览和应用多主机部署</a><br />
+国产开源服务器管理面板 1Panel 推出新版，重点支持多主机部署。在云原生时代，轻量级的多节点管理工具正在成为个人开发者和小微企业的刚需。</p>
+<hr />
+<h3 id="4">4. 推荐阅读</h3>
+<p><strong><a href="https://nanonets.com/cookbooks/structured-llm-o utputs">LLM Structured Outputs Handbook</a></strong><br />
+<em>技术必读</em> 深入探讨如何让大模型输出结构化数据。如果你正为 AI 生成 JSON 报错而头疼，这是一份实用的实操指南。</p>
+<p><strong><a href="http://www.huxiu.com/article/4826883?f=wangzhan">从珠峰滑下来，最难的到底是哪一步？</a></strong><br />
+<em>商业视角</em> 非常深刻的中国企业出海复盘。文章跳出了简单的“卖货”逻辑，探讨了品牌在全球化过程中本地化与合规的深水区。</p>
+<p><strong><a href="https://www.niemanlab.org/2026/01/after-25-years-wikipedia-has-proved-that-news-doesnt-need-to-look-like-news/">After 25 years, Wikipedia has proved that news doesn't need to look like news</a></strong><br />
+<em>媒体思考</em> 维基百科成立 25 周年的深度思考。在一个信息碎片化的时代，维基百科证明了“缓慢的共识”依然具有无与伦比的价值。</p>
+<p><strong><a href="https://alexharri.com/blog/ascii-rendering">ASCII characters are not pixels: a deep dive into ASCII rendering</a></strong><br />
+<em>硬核技术</em> 关于字符渲染的底层原理科普。如果你想了解终端如何将字符转化为图像，这篇文章充满了极客的乐趣。</p>
+<p><strong><a href="https://bfl.ai/blog/flux2-klein-towards-interactive-visual-intelligence">FLUX.2 [Klein]: Towards Interactive Visual Intelligence</a></strong><br />
+<em>前沿视觉</em> Black Forest Lab 发布 FLUX.2 Klein，致力于实现“交互式视觉智能”。这可能意味着 AI 视频生成正从离线渲染走向实时交互。</p>
+            </div>
+        </article>
+        
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-text">&copy; 2026 每日科技简报 · 由 Claude AI 自动生成</div>
+                <div class="footer-links">
+                    <a href="https://github.com/biyan113/cron" class="footer-link">GitHub</a>
+                    <a href="https://github.com/biyan113/cron" class="footer-link">V2EX</a>
+                    <a href="https://github.com/biyan113/cron" class="footer-link">Hacker News</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
