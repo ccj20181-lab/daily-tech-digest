@@ -21,14 +21,23 @@ def send_pushplus_notification(token: str, title: str, content: str, digest_url:
         content: 消息内容
         digest_url: 简报URL
     """
-    # 构建完整消息
-    full_content = f"""{content}
+    # 构建完整消息（使用HTML格式）
+    full_content = f"""
+{content}
 
----
-📅 查看完整简报: {digest_url}
-
-🤖 由 Claude AI + 智谱 GLM-4.7 自动生成
+<br>
+<hr>
+<h3>📱 快速访问</h3>
+<p>
+🔗 <b><a href="{digest_url}">点击查看完整简报</a></b><br>
+📚 <a href="{digest_url.replace('latest.md', '')}">查看历史归档</a><br>
+🌐 <a href="https://github.com/ccj20181-lab/daily-tech-digest">GitHub 仓库</a>
+</p>
+<hr>
+<p style="color: #999; font-size: 12px;">
+🤖 由 Claude AI + 智谱 GLM-4.7 自动生成<br>
 ⏰ 生成时间: {datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')}
+</p>
 """
 
     # PushPlus API
@@ -79,8 +88,14 @@ def main():
         with open(digest_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 提取前500字符作为摘要
-        summary = content[:500].replace("\n", "<br>") + "..." if len(content) > 500 else content.replace("\n", "<br>")
+        # 提取前800字符作为摘要（更适合HTML展示）
+        if len(content) > 800:
+            summary = content[:800].replace("\n", "<br>") + "..."
+        else:
+            summary = content.replace("\n", "<br>")
+
+        # 添加HTML换行
+        summary = "<p>" + summary + "</p>"
 
         # 构建标题
         tz = pytz.timezone("Asia/Shanghai")
