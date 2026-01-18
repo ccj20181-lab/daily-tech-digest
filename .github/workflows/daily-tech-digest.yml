@@ -58,3 +58,12 @@ jobs:
     - name: 推送到远程仓库
       run: |
         git push
+
+    - name: 发送微信通知（PushPlus）
+      if: success()
+      env:
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+      run: |
+        python scripts/send_pushplus.py
