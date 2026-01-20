@@ -34,7 +34,7 @@ jobs:
 
     - name: 运行财经简报生成脚本
       env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
         ANTHROPIC_BASE_URL: https://open.bigmodel.cn/api/anthropic
       run: |
         python scripts/finance_digest.py

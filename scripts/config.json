@@ -1,39 +1,24 @@
 {
   "rss_feeds": {
-    "wallstreetcn": {
-      "url": "https://wallstreetcn.com/rss/news.xml",
-      "name": "华尔街见闻",
-      "category": "市场动态"
+    "36kr": {
+      "url": "https://36kr.com/feed",
+      "name": "36氪",
+      "category": "科技财经"
     },
-    "caixin": {
-      "url": "https://www.caixin.com/rss/rss_finance.xml",
-      "name": "财新网",
-      "category": "深度分析"
+    "huxiu": {
+      "url": "https://www.huxiu.com/rss/0.xml",
+      "name": "虎嗅",
+      "category": "商业观察"
     },
-    "yicai": {
-      "url": "https://www.yicai.com/rss/yicai.xml",
-      "name": "第一财经",
-      "category": "综合财经"
+    "xueqiu": {
+      "url": "https://xueqiu.com/hots/topic/rss",
+      "name": "雪球",
+      "category": "投资者社区"
     },
     "ftchinese": {
       "url": "https://www.ftchinese.com/rss/feed",
       "name": "FT中文网",
       "category": "市场分析"
-    },
-    "pbc": {
-      "url": "http://www.pbc.gov.cn/rss/rss_gdxw.xml",
-      "name": "央行政策",
-      "category": "政策公告"
-    },
-    "bloomberg": {
-      "url": "https://www.bloomberg.com/feed/economy.rss",
-      "name": "Bloomberg",
-      "category": "国际财经"
-    },
-    "reuters": {
-      "url": "https://www.reuters.com/finance/breakingnews",
-      "name": "路透社",
-      "category": "国际新闻"
     },
     "cnbc": {
       "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
