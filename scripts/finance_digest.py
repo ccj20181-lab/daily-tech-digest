@@ -88,12 +88,19 @@ def prepare_content_for_claude(rss: list) -> str:
     return "\n\n".join(sections)
 
 
+def get_api_key() -> str:
+    """获取API Key,兼容多种环境变量名称"""
+    # 优先使用新的 AUTH_TOKEN,其次使用旧的 API_KEY
+    api_key = os.environ.get("ANTHROPIC_AUTH_TOKEN") or os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError("请设置 ANTHROPIC_AUTH_TOKEN 或 ANTHROPIC_API_KEY 环境变量")
+    return api_key
+
+
 def generate_digest_with_claude(content: str, config: dict, today: str) -> str:
     """使用 Claude/GLM 生成财经简报"""
     # API 配置
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise ValueError("请设置 ANTHROPIC_API_KEY 环境变量")
+    api_key = get_api_key()
 
     base_url = os.environ.get("ANTHROPIC_BASE_URL")
 
